@@ -1,41 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wordpress
+  name: phpmyadmin-deployment
   labels:
-    app: wordpress
+    app: phpmyadmin
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: wordpress
-  strategy:
-    type: Recreate
+      app: phpmyadmin
   template:
     metadata:
       labels:
-        app: wordpress
+        app: phpmyadmin
     spec:
       containers:
-      - image: wordpress:6.2.1-apache
-        name: wordpress
-        envFrom:
-          - configMapRef:
-              name: wordpress-config
-          - secretRef:
-              name: wordpress-secret
+      - name: phpmyadmin
+        image: phpmyadmin/phpmyadmin
         ports:
-        - containerPort: 80
-          name: wordpress
-        volumeMounts:
-        - name: wordpress-persistent-storage
-          mountPath: /var/www/html
+          - containerPort: 80
+        env:
+          - name: PMA_HOST
+            value: wordpress-mysql
+          - name: PMA_PORT
+            value: "3306"
+          - name: MYSQL_ROOT_PASSWORD
+            value: rahasia
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "100Mi"
+            cpu: "50m"
           limits:
-            memory: "2048Mi"
-            cpu: 1
+            memory: "512Mi"
+            cpu: "500m"
         startupProbe:
           failureThreshold: 30
           periodSeconds: 5
@@ -57,8 +54,3 @@ spec:
           httpGet:
             path: /
             port: 80
-
-      volumes:
-      - name: wordpress-persistent-storage
-        persistentVolumeClaim:
-          claimName: wp-pv-claim
